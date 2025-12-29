@@ -4,6 +4,8 @@
 #include "Vec3.hpp"
 
 namespace BitMap {
+    unsigned padding;
+
     struct __attribute__((packed)) FileHeader {
         unsigned header0 : 8;
         unsigned header1 : 8;
@@ -33,6 +35,10 @@ namespace BitMap {
         unsigned r : 8;
     };
 
+    unsigned calc_row_padding(unsigned row_bytes) {
+        return (4 - (row_bytes % 4)) % 4; // Pad to 4 byte multiple
+    }
+
     void write_file_header(std::ostream &out, const FileHeader &header) {
         out.write(reinterpret_cast<const char*>(&header), sizeof(BitMap::FileHeader));
     }
@@ -41,8 +47,28 @@ namespace BitMap {
         out.write(reinterpret_cast<const char*>(&header), sizeof(BitMap::InfoHeader));
     }
 
-    unsigned calc_row_padding(unsigned row_bytes) {
-        return (4 - (row_bytes % 4)) % 4; // Pad to 4 byte multiple
+    void prepare_file(std::ostream &bmp_file_stream, unsigned w, unsigned h) {
+        const unsigned W_BYTES = w * 3;
+        BitMap::padding = BitMap::calc_row_padding(W_BYTES);
+
+        BitMap::FileHeader file_header = {
+            'B', 'M',
+            (sizeof(BitMap::FileHeader) + sizeof(BitMap::InfoHeader) + ((W_BYTES + BitMap::padding) * h)),
+            0, 0,
+            (sizeof(BitMap::FileHeader) + sizeof(BitMap::InfoHeader))
+        };
+        BitMap::InfoHeader info_header = {
+            sizeof(BitMap::InfoHeader),
+            w, h,
+            1,
+            24,
+            0,
+            ((W_BYTES + BitMap::padding) * h),
+            0, 0, 0, 0
+        };
+
+        BitMap::write_file_header(bmp_file_stream, file_header);
+        BitMap::write_info_header(bmp_file_stream, info_header);
     }
 
     void write_color(std::ostream &out, const Color &pixel_color) {
@@ -59,8 +85,8 @@ namespace BitMap {
         out.write(reinterpret_cast<const char*>(&p_data), sizeof(BitMap::PixelData));
     }
 
-    void end_row(std::ostream &out, unsigned padding) {
-        out.seekp(padding, std::ios::cur);
+    void end_row(std::ostream &out, unsigned w) {
+        out.seekp(BitMap::padding, std::ios::cur);
     }
 }
 
