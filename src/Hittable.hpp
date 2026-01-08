@@ -4,14 +4,15 @@
 #include "Ray.hpp"
 #include "Interval.hpp"
 
-class HitRecord {
-private:
-    // Point3 p;
+class Material;
 
+class HitRecord {
 public:
+    Point3 p;
+    Vec3 normal;
+    std::shared_ptr<Material> mat;
     double t;
     bool front_face;
-    Vec3 normal;
 
     void set_face_normal(const Ray &r, const Vec3 &outward_normal) {
         // Sets the hit record normal vector.

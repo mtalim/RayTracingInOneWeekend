@@ -1,6 +1,7 @@
 #ifndef VEC3_H
 #define VEC3_H
 
+#include "rtweekend.hpp"
 #include <cmath>
 #include <iostream>
 
@@ -44,6 +45,20 @@ public:
 
     double length_squared() const {
         return e[0]*e[0] + e[1]*e[1] + e[2]*e[2];
+    }
+
+    bool near_zero() const {
+        // Return true if the vector is close to zero in all dimensions.
+        constexpr auto S = 1e-8;
+        return (std::fabs(e[0]) < S) && (std::fabs(e[1]) < S) && (std::fabs(e[2]) < S);
+    }
+
+    static Vec3 random() {
+        return Vec3(random_double(), random_double(), random_double());
+    }
+
+    static Vec3 random(double min, double max) {
+        return Vec3(random_double(min,max), random_double(min,max), random_double(min,max));
     }
 };
 
@@ -96,6 +111,25 @@ inline Vec3 cross(const Vec3 &u, const Vec3 &v) {
 
 inline Vec3 unit_vector(const Vec3 &v) {
     return v / v.length();
+}
+
+inline Vec3 random_unit_vector() {
+    while (true) {
+        auto p = Vec3::random(-1,1);
+        auto len_sq = p.length_squared();
+        if (1e-160 < len_sq && len_sq <= 1)
+            return p / sqrt(len_sq);
+    }
+}
+
+inline Vec3 random_on_hemisphere(const Vec3 &normal) {
+    Vec3 on_unit_sphere = random_unit_vector();
+    return (dot(on_unit_sphere, normal) > 0.0) ? // In the same hemisphere as the normal
+        on_unit_sphere : -on_unit_sphere;
+}
+
+inline Vec3 reflect(const Vec3 &v, const Vec3 &n) {
+    return v - 2*dot(v,n)*n;
 }
 
 #endif

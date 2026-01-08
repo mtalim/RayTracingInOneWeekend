@@ -23,6 +23,10 @@ class Interval {
         return min < x && x < max;
     }
 
+    double clamp(double x) const {
+        return std::fmin(max, std::fmax(min, x));
+    }
+
     static const Interval EMPTY, UNIVERSE;
 };
 

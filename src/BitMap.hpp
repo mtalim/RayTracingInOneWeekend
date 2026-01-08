@@ -2,6 +2,7 @@
 #define BITMAP_H
 
 #include "Vec3.hpp"
+#include "Interval.hpp"
 
 namespace BitMap {
     unsigned padding;
@@ -73,13 +74,14 @@ namespace BitMap {
 
     void write_color(std::ostream &out, const Color &pixel_color) {
         // Translate the [0,1] component values to the byte range [0,255].
-        auto d_to_i = [](double d) { return unsigned(255.999 * d);};
+        static const Interval intensity(0.000, 0.999);
+        auto linear_to_gamma = [](double linear_component) {return std::sqrt(linear_component);};
+        auto d_to_i = [](double d) {return unsigned(256 * intensity.clamp(d));};
 
         PixelData p_data;
-        p_data.r = d_to_i(pixel_color.x());
-        p_data.g = d_to_i(pixel_color.y());
-        p_data.b = d_to_i(pixel_color.z());
-
+        p_data.r = d_to_i(linear_to_gamma(pixel_color.x()));
+        p_data.g = d_to_i(linear_to_gamma(pixel_color.y()));
+        p_data.b = d_to_i(linear_to_gamma(pixel_color.z()));
 
         // Write out the pixel color components.
         out.write(reinterpret_cast<const char*>(&p_data), sizeof(BitMap::PixelData));
